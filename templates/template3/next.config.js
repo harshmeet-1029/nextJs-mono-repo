@@ -1,6 +1,15 @@
 module.exports = {
-  webpack(config) {
-    // Add custom webpack config if necessary
+  webpack(config, { isServer }) {
+    config.module.rules.push({
+      test: /\.js$/,
+      use: {
+        loader: "babel-loader",
+        options: {
+          presets: ["next/babel"],
+        },
+      },
+    });
+
     return config;
-  }
+  },
 };
