@@ -3,13 +3,15 @@ const next = require("next");
 const path = require("path");
 const fs = require("fs");
 const axios = require("axios");
+const isDev = true; // Process environment check for dev mode
 
+// Function to fetch template data
 const getTemplateData = async (headers = null) => {
   try {
-    const serverUrl = "https://gateway.dev.boostfloral.com/";
-    let url = `${serverUrl}vendor/api/templateData/v2/public/website/getByFloristId/1`;
+    let url = `http://localhost:5000/api/template-data`; // Replace with the correct backend URL
     const response = await axios.get(url, headers);
-    return response?.data?.objectData || null;
+    console.log("response: ", response?.data);
+    return response?.data || null;
   } catch (error) {
     console.error("Error fetching template data:", error);
     return null;
@@ -62,7 +64,7 @@ const getThemeNumber = (templateId) => {
 // Function to start the template server
 const startTemplateServer = (templatePath, req, res) => {
   const nextApp = next({
-    dev: false,
+    dev: isDev,
     dir: path.join(__dirname, "templates", templatePath),
   });
 
@@ -94,7 +96,7 @@ const startServer = async () => {
       return res.status(404).send("Template not found");
     }
 
-    const templateId = templateData?.baseTemplateDTO?.templateId;
+    const templateId = templateData?.templateId;
     const themeNumber = getThemeNumber(templateId);
     const templatePath = `template${themeNumber}`;
 
@@ -108,7 +110,7 @@ const startServer = async () => {
     );
 
     // Check if build exists, if not, build it
-    if (!fs.existsSync(buildFolderPath)) {
+    if (!isDev && !fs.existsSync(buildFolderPath)) {
       console.log("Build folder not found. Running build...");
       const { execSync } = require("child_process");
       execSync("next build", {
@@ -116,7 +118,7 @@ const startServer = async () => {
       });
     }
 
-    // Serve the template
+    // Serve the template after ensuring the build folder is available
     startTemplateServer(templatePath, req, res);
   });
 
